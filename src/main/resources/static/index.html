@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using the OpenAI</title>
+    <style>
+        body {
+          background-color: wheat;
+        }
+        .leftSideDiv {
+          float: left;
+          padding: 5px;
+        }
+        table, th, td {
+          border: 1px solid;
+        }
+    </style>
+    <script type="text/javascript">
+        async function chatCompletion(question) {
+            console.debug('question[' + question + ']');
+            const response = await fetch('/api/v1/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({question: question})
+                }
+            ).catch((error) => ('HTTP error', error));
+            return await response.json();
+        }
+        async function audioTranscription(uploadFiles) {
+            const formData = new FormData();
+            for (const uploadFile of uploadFiles) {
+                formData.append('file', uploadFile);
+            }
+            const response = await fetch('/api/v1/transcription', {
+                    method: 'POST',
+                    body: formData
+                }
+            ).catch((error) => ('HTTP error', error));
+            return await response.json();
+        }
+        async function audioTranscriptionRepeat() {
+            const response = await fetch('/api/v1/transcription_repeat'
+            ).catch((error) => ('HTTP error', error));
+            return await response.text();
+        }
+
+        window.addEventListener('load', async () => {
+            const queryElem = document.getElementById('queryId');
+            queryElem.addEventListener('click', async event => {
+                const questionElem = document.getElementById('questionId');
+                const response = await chatCompletion(questionElem.value);
+                document.getElementById('roleId').innerText = response.choices[0].message.role;
+                document.getElementById('contentId').innerText = response.choices[0].message.content;
+                document.getElementById('promptTokensId').innerText = response.usage.promptTokens;
+                document.getElementById('completionTokensId').innerText = response.usage.completionTokens;
+                document.getElementById('totalTokensId').innerText = response.usage.totalTokens;
+            })
+            const formElem = document.getElementById("formId");
+            const handleSubmit = event => {
+                const uploadFileElem = document.getElementById("uploadFileId");
+                const response = audioTranscription(uploadFileElem.files);
+                document.getElementById('textId').innerText =  response.text;
+            };
+            formElem.addEventListener("submit", handleSubmit);
+            const repeatElem = document.getElementById('repeatId');
+            repeatElem.addEventListener('click', async event => {
+                const response = await audioTranscriptionRepeat();
+                document.getElementById('textRepeatId').innerText = response;
+            })
+        })
+    </script>
+</head>
+<body>
+<div id="leftSideDiv" class="leftSideDiv">
+<h2>Using the OpenAI ChatGPT</h2>
+<p>
+    <label for="questionId">Question:</label>
+    <input id="questionId" type="text" placeholder="ask the question">
+</p>
+<p>
+    <button id="queryId" type="button">Query Question</button><br>
+</p>
+<p><table>
+    <tr>
+        <th>Role</th>
+        <th>Prompt Tokens Usage</th>
+        <th>Completion Tokens Usage</th>
+        <th>Total Tokens Usage</th>
+    </tr>
+    <tr>
+        <td id="roleId">unknown</td>
+        <td id="promptTokensId">0</td>
+        <td id="completionTokensId">0</td>
+        <td id="totalTokensId">0</td>
+    </tr>
+</table><p>
+<label for="contentId">Content</label>
+<textarea id="contentId" rows="8" cols="50" ></textarea>
+</div>
+
+<div id="spacerId" class="leftSideDiv" style="margin-left:150px;"></div>
+
+<div id="rightSideId" class="leftSideDiv">
+<h2>Using the OpenAI Whisper</h2>
+<form id="formId" enctype="multipart/form-data">
+    <div class="input-group">
+        <label for="uploadFileId">Select sample</label>
+        <input id="uploadFileId" type="file" accept=".mp3,audio/*"/>
+    </div>
+    <p>
+        <button id = "uploadButtonId" type="submit">Upload Sample</button>
+    </p>
+</form>
+<label for="textId">Text</label>
+<textarea id="textId" rows="8" cols="50" ></textarea>
+<p>
+    <button id="repeatId" type="button">Repeat Upload</button><br>
+</p>
+<label for="textRepeatId">Text</label>
+<textarea id="textRepeatId" rows="8" cols="50" ></textarea>
+</div>
+</body>
+</html>

@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class Application {
     /**
-     * the constructor
+     * The constructor
      */
     public Application() {
     }

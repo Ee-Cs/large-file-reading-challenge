@@ -1,5 +1,6 @@
 package kp.services;
 
+import kp.Easy;
 import kp.models.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;
@@ -7,7 +8,6 @@ import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -15,12 +15,12 @@ import java.nio.file.StandardOpenOption;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.stream.LongStream;
 
 import static kp.Constants.*;
 
 /**
- * The client service.
+ * The service.
+ *
  */
 @Slf4j
 @Service
@@ -28,6 +28,9 @@ public class KpService {
 
     private final JdbcBatchItemWriter<Data> jdbcBatchItemWriter;
     private final JdbcClient jdbcClient;
+
+    // for test run with big 3 GB file
+    private static final boolean SELECTED_EASY_LOGIC = !false;
 
     /**
      * The constructor.
@@ -47,33 +50,48 @@ public class KpService {
      */
     public String process() {
 
+        if (SELECTED_EASY_LOGIC) {
+            return new Easy().easyProcess();
+        }
         final byte[] destArr = new byte[Short.MAX_VALUE];
         try (FileChannel fileChannel = FileChannel.open(DATA_FILE, StandardOpenOption.READ)) {
-            int position = 0;
-            while(position < fileChannel.size()) {
+            long position = 0;
+            while (position < fileChannel.size()) {
                 long regionSize = Math.min(Integer.MAX_VALUE, fileChannel.size() - position);
                 log.info("process(): FileChannel::map,  position[{}], regionSize[{}]", position, regionSize);
                 final MappedByteBuffer mappedByteBuffer =
                         fileChannel.map(FileChannel.MapMode.READ_ONLY, position, regionSize);
-                int index = 0;
+                long index = 0;
+                long previousIndexInBuffer = 0;
                 boolean matchedFlag = true;
                 while (matchedFlag) {
-                    int destLength = (int)Math.min(Short.MAX_VALUE, fileChannel.size() - index);
-                    //log.info("process(): MappedByteBuffer::get,  index[{}], destLength[{}]", index, destLength);
-                    mappedByteBuffer.get(index, destArr, 0, destLength);
+                    Arrays.fill(destArr, (byte) 0);
+                    int destLength = (int) Math.min(Math.min(Short.MAX_VALUE, regionSize), fileChannel.size() - index);
+                    mappedByteBuffer.get((int) index, destArr, 0, destLength);
+                    previousIndexInBuffer = index;
                     final String text = new String(destArr, StandardCharsets.UTF_8);
-                    int lastIndex = text.lastIndexOf("\r\n");
-                    if (lastIndex == -1) {
+                    int lastIndexInText = text.lastIndexOf("\r\n");
+                    if (lastIndexInText == -1) {
                         matchedFlag = false;
                         continue;
                     }
-                    position = index;
-                    index += lastIndex + 2;
-                    matchedFlag = readLines(text.substring(0, lastIndex));
+                    matchedFlag = readLines(text.substring(0, lastIndexInText));
+                    index += lastIndexInText + 2;
+                    if (index >= regionSize || index + destLength >= regionSize) {
+                        matchedFlag = false;
+                    }
+                }
+                if (previousIndexInBuffer == 0) {
+                    break;
+                }
+                position += previousIndexInBuffer;
+                if (position >= fileChannel.size()) {
+                    break;
                 }
             }
         } catch (Exception e) {
             log.error("process(): exception[{}]", e.getMessage());
+            return "ERROR";
         }
         String city = "Chicago";
         final Map<Integer, Double> avgTempMap = computeAverageTemperatures(city);
@@ -86,6 +104,8 @@ public class KpService {
     }
 
     /**
+     * Reads the text lines.
+     *
      * @param text the text
      * @return the matched flag
      */
@@ -105,7 +125,7 @@ public class KpService {
 
 
     /**
-     * Inserts data into the database.
+     * Inserts the data into the database.
      *
      * @param dataList the data list
      */
@@ -121,7 +141,7 @@ public class KpService {
     }
 
     /**
-     * Computes average temperatures.
+     * Computes the average temperatures.
      *
      * @param city the city
      * @return the map
@@ -141,6 +161,7 @@ public class KpService {
     }
 
     /**
+     * Selects the data from the database.
      *
      */
     private void selectData() {
@@ -148,8 +169,6 @@ public class KpService {
         // yearly average temperatures for a given city
         // array of objects with the following fields:
         // year, averageTemperature
-
-
         final List<Data> dataList = jdbcClient.sql(ALL_DATA_SQL).query(Data.class).list();
         log.info("""
                         selectData(): data list size[{}],

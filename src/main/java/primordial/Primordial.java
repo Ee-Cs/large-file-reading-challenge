@@ -18,7 +18,7 @@ import java.util.stream.IntStream;
 public class Primordial {
     private static final Function<Integer, String> DATE_FUN = arg ->
             Instant.ofEpochMilli(180_000L * arg).atZone(ZoneId.systemDefault())
-            .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
+                    .toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
     private static final Random RANDOM = new Random();
     private static final double RANDOM_NUMBER_ORIGIN = -50d;
     private static final double RANDOM_NUMBER_BOUND = 50d;
@@ -28,9 +28,10 @@ public class Primordial {
                             .replace("/", "_")));
 
     /**
-     * The constructor
+     * The hidden constructor.
      */
     private Primordial() {
+        throw new IllegalStateException("Utility class");
     }
 
     /**
@@ -39,7 +40,7 @@ public class Primordial {
      * @param args the arguments
      */
     public static void main(String[] args) {
-        for(String city : Cities.list) {
+        for (String city : Cities.list) {
             System.out.println(DATA_FILE_CITY.apply(city));
             //final List<String> list = createData(city);
             //writeDataFile(city, list);
@@ -47,8 +48,9 @@ public class Primordial {
     }
 
     /**
+     * Creates the data (too much data -it creates 300GB of files).
      *
-     * @return list
+     * @return the list
      */
     private static List<String> createData(String city) {
 
@@ -63,6 +65,7 @@ public class Primordial {
     }
 
     /**
+     * Writes the data file.
      *
      * @param city the city
      * @param list the list
@@ -81,6 +84,8 @@ public class Primordial {
     }
 }
 /*
+Calculations.
+
 every 3 minutes one point, total points  8`765`760
 
 one line 38 bytes
@@ -90,11 +95,11 @@ total 1000 cities lines: 84`769`091
 one city of 1000  lines: 8`476`909
 one point every 3 min:   8`765`760 <--- OK it is bigger
 
-Class "Cities" has 1000 cities but only 925 unique cities.
-Created 925 Files, total bytes: 335`742`725`454 = 313 GB
-From that selected only 10 files (because it was too much).
+Class "Cities" has 1000 cities together but only 925 unique cities.
+Created were 925 Files, total bytes: 335`742`725`454 = 313 GB
+From all that were selected only 10 files (because it was too much).
 
 Data file 'city_temperatures.csv'
-10 cities
+10 US cities
 bytes: 3,585,211,533 = 3.33 GB
 */

@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import static kp.Constants.TO_DATE_TIME_FUN;
 
 /**
- * The data record.
+ * The data record used with database.
  *
  * @param city        the city
  * @param dateTime    the date and time
@@ -15,7 +15,7 @@ import static kp.Constants.TO_DATE_TIME_FUN;
  */
 public record Data(String city, OffsetDateTime dateTime, Double temperature) {
     /**
-     * Creates data record from matcher subsequences.
+     * Creates the data record from matcher subsequences.
      *
      * @param matcher the {@link Matcher}
      * @return the data
@@ -28,7 +28,7 @@ public record Data(String city, OffsetDateTime dateTime, Double temperature) {
                 .map(str -> {
                     try {
                         return Double.parseDouble(str);
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         System.out.println(matcher.group(0));
                         System.out.println(str);
                         System.out.println(e.getMessage());
@@ -36,7 +36,7 @@ public record Data(String city, OffsetDateTime dateTime, Double temperature) {
                     }
                     return null;
                 });
-        if(cityOpt.isEmpty() || dateTimeOpt.isEmpty() || temperatureOpt.isEmpty()) {
+        if (cityOpt.isEmpty() || dateTimeOpt.isEmpty() || temperatureOpt.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(new Data(cityOpt.get(), dateTimeOpt.get(), temperatureOpt.get()));

@@ -24,14 +24,20 @@ public class KpService {
     private static final boolean USE_FULL_FILE = true;
     private static final boolean PROLIX = false;
 
-    public static final Path FULL_DATA_FILE = Path.of("data\\city_temperatures.csv");
-    public static final Path ONE_CITY_DATA_FILE = Path.of("data_cities\\city_temperatures_New_York_City.csv");
-    public static final Pattern LINE_PATTERN = Pattern.compile(
+    private static final Path FULL_DATA_FILE = Path.of("data\\city_temperatures.csv");
+    private static final Path ONE_CITY_DATA_FILE = Path.of("data_cities\\city_temperatures_New_York_City.csv");
+    private static final Pattern LINE_PATTERN = Pattern.compile(
             "^([^,\n]+),([^,\n]+),([^,\n]+)$", Pattern.MULTILINE);
     /**
      * The map with the data read from the big file.
      */
     private static final Map<String, Map<Integer, double[]>> AVERAGE_MAP = new TreeMap<>();
+
+    /**
+     * The constructor
+     */
+    public KpService() {
+    }
 
     /**
      * Processes.

@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 @RequestMapping
 public class KpController {
 
-    public static final String AVERAGE_TEMPERATURES_PATH = "/average_temperatures";
+    static final String AVERAGE_TEMPERATURES_PATH = "/average_temperatures";
     private final KpService kpService;
 
     /**

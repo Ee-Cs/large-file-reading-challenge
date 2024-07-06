@@ -25,8 +25,16 @@ public class Utilities {
     private static FileTime previousFileTime = null;
 
     /**
+     * The hidden constructor.
+     */
+    private Utilities() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    /**
      * Compares last modified time with previous time.
      *
+     * @param path the path
      * @return the result
      */
     public static boolean compareLastModifiedTimeWithPrevious(Path path) {

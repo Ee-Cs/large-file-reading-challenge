@@ -8,7 +8,7 @@
 :large
 %HR_YELLOW%
 @powershell -Command Write-Host "GET large" -foreground "Green"
-%CURL% -H "Content-Type: application/json" -X GET "%SITE%/large"
+%CURL% -H "Content-Type: application/json" -X GET "%SITE%/average_temperatures?city=Chicago"
 @echo.
 
 :finish

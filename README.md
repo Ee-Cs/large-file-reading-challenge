@@ -13,5 +13,4 @@
     </li>
 </ul>
 <p>The console log fragment with successful results is in file "docs\console.log"</p>
-[Spring Guides - Batch Processing ](https://github.com/spring-guides/gs-batch-processing)
-
+<p>Zipped 3GB file <i>city_temperatures.csv</i> has size 495 MB</p>

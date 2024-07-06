@@ -1,64 +1,75 @@
 package kp.services;
 
-import kp.Easy;
-import kp.models.Data;
+import kp.models.YearAndAverageTemperature;
+import kp.tools.Utilities;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.Chunk;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.sql.ResultSet;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static kp.Constants.*;
 
 /**
  * The service.
- *
  */
 @Slf4j
 @Service
 public class KpService {
+    private static final boolean USE_FULL_FILE = true;
+    private static final boolean PROLIX = false;
 
-    private final JdbcBatchItemWriter<Data> jdbcBatchItemWriter;
-    private final JdbcClient jdbcClient;
-
-    // for test run with big 3 GB file
-    private static final boolean SELECTED_EASY_LOGIC = !false;
-
+    public static final Path FULL_DATA_FILE = Path.of("data\\city_temperatures.csv");
+    public static final Path ONE_CITY_DATA_FILE = Path.of("data_cities\\city_temperatures_New_York_City.csv");
+    public static final Pattern LINE_PATTERN = Pattern.compile(
+            "^([^,\n]+),([^,\n]+),([^,\n]+)$", Pattern.MULTILINE);
     /**
-     * The constructor.
-     *
-     * @param jdbcBatchItemWriter thr writer
-     * @param jdbcClient          the JDBC client
+     * The map with the data read from the big file.
      */
-    public KpService(JdbcBatchItemWriter<Data> jdbcBatchItemWriter, JdbcClient jdbcClient) {
-        this.jdbcBatchItemWriter = jdbcBatchItemWriter;
-        this.jdbcClient = jdbcClient;
-    }
+    private static final Map<String, Map<Integer, double[]>> AVERAGE_MAP = new TreeMap<>();
 
     /**
      * Processes.
      *
+     * @param city the city
      * @return the response
      */
-    public String process() {
+    public List<YearAndAverageTemperature> process(String city) {
 
-        if (SELECTED_EASY_LOGIC) {
-            return new Easy().easyProcess();
+        final Path path = USE_FULL_FILE ? FULL_DATA_FILE : ONE_CITY_DATA_FILE;
+        if (Utilities.compareLastModifiedTimeWithPrevious(path)) {
+            final List<YearAndAverageTemperature> yearAndAverageTemperatureList = getAveragesList(city);
+            log.info("process(): data file unchanged, city[{}]", city);
+            return yearAndAverageTemperatureList;
         }
+        if (!readFile(path)) {
+            log.error("process(): file reading failed");
+            return List.of();
+        }
+        final List<YearAndAverageTemperature> yearAndAverageTemperatureList = getAveragesList(city);
+        log.info("process(): city[{}]", city);
+        return yearAndAverageTemperatureList;
+    }
+
+    /**
+     * Reads the file.
+     *
+     * @param path the file path
+     */
+    private boolean readFile(Path path) {
+
         final byte[] destArr = new byte[Short.MAX_VALUE];
-        try (FileChannel fileChannel = FileChannel.open(DATA_FILE, StandardOpenOption.READ)) {
+        try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+            log.info("readFile(): path[{}], file channel size[{}]", path, fileChannel.size());
             long position = 0;
             while (position < fileChannel.size()) {
                 long regionSize = Math.min(Integer.MAX_VALUE, fileChannel.size() - position);
-                log.info("process(): FileChannel::map,  position[{}], regionSize[{}]", position, regionSize);
+                log.info("readFile(): position[{}], regionSize[{}]", position, regionSize);
                 final MappedByteBuffer mappedByteBuffer =
                         fileChannel.map(FileChannel.MapMode.READ_ONLY, position, regionSize);
                 long index = 0;
@@ -67,7 +78,13 @@ public class KpService {
                 while (matchedFlag) {
                     Arrays.fill(destArr, (byte) 0);
                     int destLength = (int) Math.min(Math.min(Short.MAX_VALUE, regionSize), fileChannel.size() - index);
-                    mappedByteBuffer.get((int) index, destArr, 0, destLength);
+                    try {
+                        mappedByteBuffer.get((int) index, destArr, 0, destLength);
+                    } catch (Exception e) {
+                        log.error("readFile(): path[{}], mappedByteBuffer exception[{}]",
+                                path, e.getMessage());
+                        return false;
+                    }
                     previousIndexInBuffer = index;
                     final String text = new String(destArr, StandardCharsets.UTF_8);
                     int lastIndexInText = text.lastIndexOf("\r\n");
@@ -82,25 +99,22 @@ public class KpService {
                     }
                 }
                 if (previousIndexInBuffer == 0) {
+                    log.debug("readFile(): break on zero previousIndexInBuffer");
                     break;
                 }
                 position += previousIndexInBuffer;
                 if (position >= fileChannel.size()) {
+                    log.debug("readFile(): break on position[{}] >= file channel[{}]",
+                            position, fileChannel.size());
                     break;
                 }
             }
         } catch (Exception e) {
-            log.error("process(): exception[{}]", e.getMessage());
-            return "ERROR";
+            log.error("readFile(): path[{}], exception[{}]", path, e.getMessage());
+            return false;
         }
-        String city = "Chicago";
-        final Map<Integer, Double> avgTempMap = computeAverageTemperatures(city);
-        avgTempMap.forEach((key, value) -> log.info(
-                "process(): year[{}], average temperature[{}]",
-                key, FROM_TEMP_FUN.apply(value)));
-        //selectData();
-        log.info("process():");
-        return "OK";
+        log.info("readFile(): OK");
+        return true;
     }
 
     /**
@@ -112,75 +126,80 @@ public class KpService {
     private boolean readLines(String text) {
 
         final Matcher matcher = LINE_PATTERN.matcher(text);
-        final List<Data> dataList = new ArrayList<>();
         boolean matchedFlag = false;
         while (matcher.find()) {
             matchedFlag = true;
-            Optional<Data> dataOpt = Data.of(matcher);
-            dataOpt.ifPresent(dataList::add);
+            readMatchedLine(matcher);
         }
-        insertData(dataList);
         return matchedFlag;
     }
 
-
     /**
-     * Inserts the data into the database.
+     * Reads the matched line.
      *
-     * @param dataList the data list
+     * @param matcher the matcher
      */
-    public void insertData(List<Data> dataList) {
+    private void readMatchedLine(Matcher matcher) {
 
-        final Chunk<Data> chunk = new Chunk<>();
-        dataList.forEach(chunk::add);
-        try {
-            jdbcBatchItemWriter.write(chunk);
-        } catch (Exception e) {
-            log.error("insertData(): exception[{}]", e.getMessage());
+        final Optional<String> cityOpt = Optional.ofNullable(matcher.group(1));
+        final Optional<Integer> yearOpt = Optional.ofNullable(matcher.group(2))
+                .map(str -> str.substring(0, 4)).map(Integer::valueOf);
+        final Optional<Double> temperatureOpt = Optional.ofNullable(matcher.group(3))
+                .map(str -> {
+                    try {
+                        return Double.parseDouble(str);
+                    } catch (Exception e) {
+                        log.error("readMatchedLine(): entire pattern[{}], avg temp[{}], exception[{}]",
+                                matcher.group(0), str, e.getMessage());
+                        return null;
+                    }
+                });
+        if (cityOpt.isEmpty() || yearOpt.isEmpty() || temperatureOpt.isEmpty()) {
+            log.warn("readMatchedLine(): something was not matched, " +
+                     "city empty[{}], year empty[{}], avg temp empty[{}]",
+                    cityOpt.isEmpty(), yearOpt.isEmpty(), temperatureOpt.isEmpty());
+            return;
         }
+        computeAverages(cityOpt.get(), yearOpt.get(), temperatureOpt.get());
     }
 
     /**
-     * Computes the average temperatures.
+     * Gets the averages list.
      *
      * @param city the city
-     * @return the map
+     * @return the list
      */
-    private Map<Integer, Double> computeAverageTemperatures(String city) {
+    private List<YearAndAverageTemperature> getAveragesList(String city) {
 
-        return jdbcClient.sql(AVERAGE_TEMPERATURE_SQL)
-                .param(city)
-                .query((ResultSet resultSet) -> {
-                    final Map<Integer, Double> map = new TreeMap<>();
-                    while (resultSet.next()) {
-                        map.put(resultSet.getInt("date_year"),
-                                resultSet.getDouble("average"));
-                    }
-                    return map;
-                });
+        final List<YearAndAverageTemperature> yearAndAverageTemperatureList =
+                AVERAGE_MAP.entrySet().stream()
+                        .filter(cityEntry -> city.equals(cityEntry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .flatMap(yearMap -> yearMap.keySet().stream().map(
+                                year -> new YearAndAverageTemperature(year,
+                                        yearMap.get(year)[1] / yearMap.get(year)[0])))
+                        .toList();
+        if (PROLIX) {
+            Utilities.report(AVERAGE_MAP, yearAndAverageTemperatureList);
+        }
+        return yearAndAverageTemperatureList;
     }
 
     /**
-     * Selects the data from the database.
+     * Reads the matched line.
      *
+     * @param city        the city
+     * @param year        the year
+     * @param temperature the temperature
      */
-    private void selectData() {
+    private void computeAverages(String city, Integer year, Double temperature) {
 
-        // yearly average temperatures for a given city
-        // array of objects with the following fields:
-        // year, averageTemperature
-        final List<Data> dataList = jdbcClient.sql(ALL_DATA_SQL).query(Data.class).list();
-        log.info("""
-                        selectData(): data list size[{}],
-                        first city[{}], dateTime[{}], temperature[{}]
-                        last  city[{}], dateTime[{}], temperature[{}]
-                        """,
-                dataList.size(),
-                dataList.getFirst().city(),
-                FROM_DATE_TIME_FUN.apply(dataList.getFirst().dateTime()),
-                FROM_TEMP_FUN.apply(dataList.getFirst().temperature()),
-                dataList.getLast().city(),
-                FROM_DATE_TIME_FUN.apply(dataList.getLast().dateTime()),
-                FROM_TEMP_FUN.apply(dataList.getLast().temperature()));
+        AVERAGE_MAP.putIfAbsent(city, new TreeMap<>());
+        final Map<Integer, double[]> cityMap = AVERAGE_MAP.get(city);
+        cityMap.putIfAbsent(year, new double[2]);
+        final double[] totalArr = cityMap.get(year);
+        totalArr[0]++;
+        totalArr[1] = totalArr[1] + temperature;
     }
+
 }

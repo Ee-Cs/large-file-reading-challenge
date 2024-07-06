@@ -1,128 +1,266 @@
-HTML PAGE TO BE DONE !!!
-
-THIS FILE IS TAKEN FROM OLD PROJECT AS A TEMPLATE TO USE !!!
-===================================================================================
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Using the OpenAI</title>
+    <title>City Average Temperature By Year</title>
     <style>
         body {
-          background-color: wheat;
-        }
-        .leftSideDiv {
-          float: left;
-          padding: 5px;
+          background-color: Wheat;
         }
         table, th, td {
           border: 1px solid;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: 3px;
+        }
+        th {
+          background-color: DarkSlateGrey;
+          color: White;
+        }
+        tr:nth-of-type(odd) {
+          background-color: LightCyan;
+        }
+        tr:nth-of-type(even) {
+          background-color: LightYellow;
         }
     </style>
     <script type="text/javascript">
-        async function chatCompletion(question) {
-            console.debug('question[' + question + ']');
-            const response = await fetch('/api/v1/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({question: question})
+        async function getAverageTemperatures(city) {
+            const response = await fetch(`/average_temperatures?city=${city}`, {
+                    method: 'GET',
+                    headers: {'Content-Type': 'application/json'}
                 }
             ).catch((error) => ('HTTP error', error));
             return await response.json();
+            //return await response.text();
         }
-        async function audioTranscription(uploadFiles) {
-            const formData = new FormData();
-            for (const uploadFile of uploadFiles) {
-                formData.append('file', uploadFile);
-            }
-            const response = await fetch('/api/v1/transcription', {
-                    method: 'POST',
-                    body: formData
-                }
-            ).catch((error) => ('HTTP error', error));
-            return await response.json();
-        }
-        async function audioTranscriptionRepeat() {
-            const response = await fetch('/api/v1/transcription_repeat'
-            ).catch((error) => ('HTTP error', error));
-            return await response.text();
-        }
-
         window.addEventListener('load', async () => {
             const queryElem = document.getElementById('queryId');
             queryElem.addEventListener('click', async event => {
-                const questionElem = document.getElementById('questionId');
-                const response = await chatCompletion(questionElem.value);
-                document.getElementById('roleId').innerText = response.choices[0].message.role;
-                document.getElementById('contentId').innerText = response.choices[0].message.content;
-                document.getElementById('promptTokensId').innerText = response.usage.promptTokens;
-                document.getElementById('completionTokensId').innerText = response.usage.completionTokens;
-                document.getElementById('totalTokensId').innerText = response.usage.totalTokens;
-            })
-            const formElem = document.getElementById("formId");
-            const handleSubmit = event => {
-                const uploadFileElem = document.getElementById("uploadFileId");
-                const response = audioTranscription(uploadFileElem.files);
-                document.getElementById('textId').innerText =  response.text;
-            };
-            formElem.addEventListener("submit", handleSubmit);
-            const repeatElem = document.getElementById('repeatId');
-            repeatElem.addEventListener('click', async event => {
-                const response = await audioTranscriptionRepeat();
-                document.getElementById('textRepeatId').innerText = response;
+                const cityListElem = document.getElementById('cityListId');
+                const response = await getAverageTemperatures(cityListElem.value);
+                const end1 = response.length / 5;
+                const end2 = 2 * end1;
+                const end3 = 3 * end1;
+                const end4 = 4 * end1;
+                const end5 = 5 * end1;
+                let tableBodyElem = document.getElementById('tableBody1Id');
+                tableBodyElem.innerHTML = '';
+                for (let i = 0; i < end1;  i++) {
+                    let rowElem = tableBodyElem.insertRow();
+                    let yearCellElem = rowElem.insertCell(0);
+                    yearCellElem.innerHTML = response[i].year;
+                    let avgTempCellElem = rowElem.insertCell(1);
+                    avgTempCellElem.innerHTML = response[i].averageTemperature;
+                }
+                tableBodyElem = document.getElementById('tableBody2Id');
+                tableBodyElem.innerHTML = '';
+                for (let i = end1; i < end2;  i++) {
+                    let rowElem = tableBodyElem.insertRow();
+                    let yearCellElem = rowElem.insertCell(0);
+                    yearCellElem.innerHTML = response[i].year;
+                    let avgTempCellElem = rowElem.insertCell(1);
+                    avgTempCellElem.innerHTML = response[i].averageTemperature;
+                }
+                tableBodyElem = document.getElementById('tableBody3Id');
+                tableBodyElem.innerHTML = '';
+                for (let i = end2; i < end3;  i++) {
+                    let rowElem = tableBodyElem.insertRow();
+                    let yearCellElem = rowElem.insertCell(0);
+                    yearCellElem.innerHTML = response[i].year;
+                    let avgTempCellElem = rowElem.insertCell(1);
+                    avgTempCellElem.innerHTML = response[i].averageTemperature;
+                }
+                tableBodyElem = document.getElementById('tableBody4Id');
+                tableBodyElem.innerHTML = '';
+                for (let i = end3; i < end4;  i++) {
+                    let rowElem = tableBodyElem.insertRow();
+                    let yearCellElem = rowElem.insertCell(0);
+                    yearCellElem.innerHTML = response[i].year;
+                    let avgTempCellElem = rowElem.insertCell(1);
+                    avgTempCellElem.innerHTML = response[i].averageTemperature;
+                }
+                tableBodyElem = document.getElementById('tableBody5Id');
+                tableBodyElem.innerHTML = '';
+                for (let i = end4; i < end5;  i++) {
+                    let rowElem = tableBodyElem.insertRow();
+                    let yearCellElem = rowElem.insertCell(0);
+                    yearCellElem.innerHTML = response[i].year;
+                    let avgTempCellElem = rowElem.insertCell(1);
+                    avgTempCellElem.innerHTML = response[i].averageTemperature;
+                }
             })
         })
     </script>
 </head>
 <body>
-<div id="leftSideDiv" class="leftSideDiv">
-<h2>Using the OpenAI ChatGPT</h2>
-<p>
-    <label for="questionId">Question:</label>
-    <input id="questionId" type="text" placeholder="ask the question">
-</p>
-<p>
-    <button id="queryId" type="button">Query Question</button><br>
-</p>
-<p><table>
-    <tr>
-        <th>Role</th>
-        <th>Prompt Tokens Usage</th>
-        <th>Completion Tokens Usage</th>
-        <th>Total Tokens Usage</th>
-    </tr>
-    <tr>
-        <td id="roleId">unknown</td>
-        <td id="promptTokensId">0</td>
-        <td id="completionTokensId">0</td>
-        <td id="totalTokensId">0</td>
-    </tr>
-</table><p>
-<label for="contentId">Content</label>
-<textarea id="contentId" rows="8" cols="50" ></textarea>
+<h2>City Average Temperature By Year</h2>
+<div style="padding-right:15px;float:left">
+    <label for="cityListId">Choose a city:</label>
+    <select id="cityListId">
+        <option value="">--Make a choice--</option>
+        <option value="New York City">New York City</option>
+        <option value="Los Angeles">Los Angeles</option>
+        <option value="Chicago">Chicago</option>
+        <option value="Houston">Houston</option>
+        <option value="Dallas-Fort Worth">Dallas-Fort Worth</option>
+        <option value="Miami">Miami</option>
+        <option value="Atlanta">Atlanta</option>
+        <option value="Philadelphia">Philadelphia</option>
+        <option value="Washington DC">Washington DC</option>
+        <option value="Phoenix">Phoenix</option>
+        <option value="Boston">Boston</option>
+        <option value="Seattle">Seattle</option>
+        <option value="Detroit">Detroit</option>
+        <option value="San Diego">San Diego</option>
+        <option value="San Francisco">San Francisco</option>
+        <option value="Minneapolis">Minneapolis</option>
+        <option value="Tampa">Tampa</option>
+        <option value="Denver">Denver</option>
+        <option value="Las Vegas">Las Vegas</option>
+        <option value="Riverside-San Bernardino">Riverside-San Bernardino</option>
+        <option value="San Antonio">San Antonio</option>
+        <option value="Baltimore">Baltimore</option>
+        <option value="Charlotte">Charlotte</option>
+        <option value="Austin">Austin</option>
+        <option value="Portland">Portland</option>
+        <option value="Sacramento">Sacramento</option>
+        <option value="St. Louis">St. Louis</option>
+        <option value="Orlando">Orlando</option>
+        <option value="Indianapolis">Indianapolis</option>
+        <option value="San Jose">San Jose</option>
+        <option value="Cincinnati">Cincinnati</option>
+        <option value="Cleveland">Cleveland</option>
+        <option value="Kansas City">Kansas City</option>
+        <option value="Columbus">Columbus</option>
+        <option value="Pittsburgh">Pittsburgh</option>
+        <option value="Raleigh">Raleigh</option>
+        <option value="Virginia Beach">Virginia Beach</option>
+        <option value="Milwaukee">Milwaukee</option>
+        <option value="Jacksonville">Jacksonville</option>
+        <option value="Nashville">Nashville</option>
+        <option value="Salt Lake City">Salt Lake City</option>
+        <option value="Providence">Providence</option>
+        <option value="Memphis">Memphis</option>
+        <option value="Richmond">Richmond</option>
+        <option value="Louisville">Louisville</option>
+        <option value="McAllen">McAllen</option>
+        <option value="Oklahoma City">Oklahoma City</option>
+        <option value="Hartford">Hartford</option>
+        <option value="Tucson">Tucson</option>
+        <option value="New Orleans">New Orleans</option>
+        <option value="El Paso">El Paso</option>
+        <option value="Temecula-Murrieta">Temecula-Murrieta</option>
+        <option value="Albuquerque">Albuquerque</option>
+        <option value="Bridgeport-Stamford">Bridgeport-Stamford</option>
+        <option value="Cape Coral">Cape Coral</option>
+        <option value="Honolulu">Honolulu</option>
+        <option value="Buffalo">Buffalo</option>
+        <option value="Birmingham">Birmingham</option>
+        <option value="Omaha">Omaha</option>
+        <option value="Provo-Orem">Provo-Orem</option>
+        <option value="Fresno">Fresno</option>
+        <option value="Tulsa">Tulsa</option>
+        <option value="Knoxville">Knoxville</option>
+        <option value="Allentown">Allentown</option>
+        <option value="Baton Rouge">Baton Rouge</option>
+        <option value="Columbia SC">Columbia SC</option>
+        <option value="Sarasota-Bradenton">Sarasota-Bradenton</option>
+        <option value="Ogden-Layton">Ogden-Layton</option>
+        <option value="Charleston-North Charleston">Charleston-North Charleston</option>
+        <option value="Rochester">Rochester</option>
+        <option value="Dayton">Dayton</option>
+        <option value="Bakersfield">Bakersfield</option>
+        <option value="Concord">Concord</option>
+        <option value="The Woodlands">The Woodlands</option>
+        <option value="Colorado Springs">Colorado Springs</option>
+        <option value="Springfield">Springfield</option>
+        <option value="Mission Viejo">Mission Viejo</option>
+        <option value="Albany">Albany</option>
+        <option value="Grand Rapids">Grand Rapids</option>
+        <option value="Victorville-Hesperia-Apple Valley">Victorville-Hesperia-Apple Valley</option>
+        <option value="New Haven">New Haven</option>
+        <option value="Kissimmee">Kissimmee</option>
+        <option value="Fayetteville-Springdale">Fayetteville-Springdale</option>
+        <option value="Des Moines">Des Moines</option>
+        <option value="Harrisburg">Harrisburg</option>
+        <option value="Greenville">Greenville</option>
+        <option value="Akron">Akron</option>
+        <option value="Worcester">Worcester</option>
+        <option value="Port St. Lucie">Port St. Lucie</option>
+        <option value="Winston-Salem">Winston-Salem</option>
+        <option value="Wichita">Wichita</option>
+        <option value="Little Rock">Little Rock</option>
+        <option value="Palm Bay-Melbourne">Palm Bay-Melbourne</option>
+        <option value="Reno">Reno</option>
+        <option value="Lancaster-Palmdale">Lancaster-Palmdale</option>
+        <option value="Poughkeepsie-Newburgh">Poughkeepsie-Newburgh</option>
+        <option value="Lancaster">Lancaster</option>
+        <option value="Daytona Beach-Port Orange">Daytona Beach-Port Orange</option>
+        <option value="Toledo">Toledo</option>
+        <option value="Madison">Madison</option>
+    </select>
 </div>
-
-<div id="spacerId" class="leftSideDiv" style="margin-left:150px;"></div>
-
-<div id="rightSideId" class="leftSideDiv">
-<h2>Using the OpenAI Whisper</h2>
-<form id="formId" enctype="multipart/form-data">
-    <div class="input-group">
-        <label for="uploadFileId">Select sample</label>
-        <input id="uploadFileId" type="file" accept=".mp3,audio/*"/>
-    </div>
-    <p>
-        <button id = "uploadButtonId" type="submit">Upload Sample</button>
-    </p>
-</form>
-<label for="textId">Text</label>
-<textarea id="textId" rows="8" cols="50" ></textarea>
-<p>
-    <button id="repeatId" type="button">Repeat Upload</button><br>
-</p>
-<label for="textRepeatId">Text</label>
-<textarea id="textRepeatId" rows="8" cols="50" ></textarea>
+<div>
+    <button id="queryId" type="button">Submit</button>
+    <br>
+</div>
+<div style="padding-top:20px;padding-right:20px;float:left">
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Average Temperature</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody1Id"></tbody>
+    </table>
+</div>
+<div style="padding-top:20px;padding-right:20px;float:left">
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Average Temperature</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody2Id"></tbody>
+    </table>
+</div>
+<div style="padding-top:20px;padding-right:20px;float:left">
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Average Temperature</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody3Id"></tbody>
+    </table>
+</div>
+<div style="padding-top:20px;padding-right:20px;float:left">
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Average Temperature</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody4Id"></tbody>
+    </table>
+</div>
+<div style="padding-top:20px">
+    <table>
+        <thead>
+        <tr>
+            <th>Year</th>
+            <th>Average Temperature</th>
+        </tr>
+        </thead>
+        <tbody id="tableBody5Id"></tbody>
+    </table>
 </div>
 </body>
 </html>

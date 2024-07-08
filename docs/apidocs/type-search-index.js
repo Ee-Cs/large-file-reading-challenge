@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"kp","l":"Application"},{"p":"kp.controllers","l":"KpController"},{"p":"kp.services","l":"KpService"},{"p":"kp.tools","l":"Utilities"},{"p":"kp.models","l":"YearAndAverageTemperature"},{"p":"kp.tools.serializers","l":"YearAndAverageTemperatureSerializer"}];updateSearchResults();

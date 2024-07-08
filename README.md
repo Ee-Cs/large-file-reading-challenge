@@ -68,4 +68,8 @@ The <a href="https://github.com/Ee-Cs/large-file-reading-challenge/tree/main/src
 tests</a>.<br>
 The controller tests use JUnit Jupiter and MockMvc.
 </p>
+<p>
+<a href="https://htmlpreview.github.io/?https://github.com/k1729p/Study01/blob/main/2-server/docs/apidocs/index.html">
+Java API Documentation</a>
+</p>
 <hr>

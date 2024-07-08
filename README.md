@@ -12,6 +12,10 @@ The CSV file is read and the computed average temperatures are kept in Map objec
 For every next request to the endpoint CSV data file modification time is checked.
 The file is reread if it was externally changed. 
 </p>
+<p>Reading the file on local machine. The elapsed time between the "Submit" button push and
+the display of the average temperature table on web page was 2 minutes and 20 seconds.<br>
+Every elapsed time for reading from the Map object is below one second. 
+</p>
 <ul>
 <li>file format - comma separated values</li>
 <li>one hundred biggest US cities (

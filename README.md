@@ -73,3 +73,20 @@ The controller tests use JUnit Jupiter and MockMvc.
 Java API Documentation</a>
 </p>
 <hr>
+<p>
+Some documentation about Java memory
+<ul>
+<li><a href="https://docs.oracle.com/en/java/javase/22/core/heap-and-heap-memory.html">
+On-Heap and Off-Heap Memory</a></li>
+<li><a href="https://documentation.softwareag.com/terracotta/terracotta_440/webhelp/bigmemory-go-webhelp/index.html#page/bmg-webhelp/co-tiers_configuring_offheap_store.html">
+About the off-heap store (from Terracotta docs)</a></li>
+<li><a href="https://www.baeldung.com/java-stack-heap">
+Stack Memory and Heap Space in Java</a></li>
+<li><a href="https://www.javatpoint.com/stack-vs-heap-java">
+Stack Vs Heap Java</a></li>
+<li><a href="https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/nio/ByteBuffer.html#direct-vs-non-direct-buffers-heading">
+Direct vs. non-direct buffers</a></li>
+<li><a href="https://openjdk.org/jeps/393">
+JEP 393: Foreign-Memory Access API</a></li>
+</ul>
+<hr>

@@ -38,12 +38,12 @@ public class KpController {
      * Gets the average temperatures.
      *
      * @param city the city
-     * @return the response with average temperatures
+     * @return the response with the average temperatures
      */
     @GetMapping(value = AVERAGE_TEMPERATURES_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<YearAndAverageTemperature> getAverageTemperatures(String city) {
 
-        Optional<String> cityOpt = Optional.ofNullable(city)
+        final Optional<String> cityOpt = Optional.ofNullable(city)
                 .filter(Predicate.not(String::isBlank));
         if (cityOpt.isEmpty()) {
             log.info("getAverageTemperatures(): city parameter is null or empty");

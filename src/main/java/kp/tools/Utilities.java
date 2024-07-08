@@ -32,7 +32,7 @@ public class Utilities {
     }
 
     /**
-     * Compares last modified time with previous time.
+     * Compares the last modified time with the previous time.
      *
      * @param path the path
      * @return the result
@@ -60,7 +60,8 @@ public class Utilities {
      * @param averageMap                    the map with the average temperatures
      * @param yearAndAverageTemperatureList the year and average temperature list
      */
-    public static void report(Map<String, Map<Integer, double[]>> averageMap, List<YearAndAverageTemperature> yearAndAverageTemperatureList) {
+    public static void report(Map<String, Map<Integer, double[]>> averageMap,
+                              List<YearAndAverageTemperature> yearAndAverageTemperatureList) {
 
         final StringBuilder strBld = new StringBuilder();
         averageMap.forEach((cityKey, yearMap) -> yearMap.forEach((year, totalArr) ->
@@ -73,10 +74,10 @@ public class Utilities {
     }
 
     /**
-     * Creates JSON with indentation.
+     * Creates the JSON with the indentation.
      *
-     * @param yearAndAverageTemperatureList the year and average temperature list
-     * @return the JSON with indentation.
+     * @param yearAndAverageTemperatureList the list with the year and the average temperature
+     * @return the JSON with the indentation.
      */
     private static String toPrettyJson(List<YearAndAverageTemperature> yearAndAverageTemperatureList) {
 

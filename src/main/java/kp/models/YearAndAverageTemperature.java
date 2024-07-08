@@ -9,7 +9,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * The year and average temperature.
+ * The year and the average temperature.
  */
 @Data
 @AllArgsConstructor

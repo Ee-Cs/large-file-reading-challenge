@@ -40,17 +40,17 @@ public class KpService {
     }
 
     /**
-     * Processes.
+     * Selects data reading from the file or from the averages map.
      *
      * @param city the city
-     * @return the response
+     * @return the list
      */
     public List<YearAndAverageTemperature> process(String city) {
 
         final Path path = USE_FULL_FILE ? FULL_DATA_FILE : ONE_CITY_DATA_FILE;
         if (Utilities.compareLastModifiedTimeWithPrevious(path)) {
             final List<YearAndAverageTemperature> yearAndAverageTemperatureList = getAveragesList(city);
-            log.info("process(): data file unchanged, city[{}]", city);
+            log.info("process(): unchanged data file, city[{}]", city);
             return yearAndAverageTemperatureList;
         }
         if (!readFile(path)) {
@@ -63,16 +63,41 @@ public class KpService {
     }
 
     /**
-     * Reads the file.
+     * Takes the data from the averages map, computes the averages and returns the averages list.
+     *
+     * @param city the city
+     * @return the list
+     */
+    private List<YearAndAverageTemperature> getAveragesList(String city) {
+
+        final List<YearAndAverageTemperature> yearAndAverageTemperatureList =
+                AVERAGE_MAP.entrySet().stream()
+                        .filter(cityEntry -> city.equals(cityEntry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .flatMap(yearMap -> yearMap.keySet().stream().map(
+                                year -> new YearAndAverageTemperature(year,
+                                        yearMap.get(year)[1] / yearMap.get(year)[0])))
+                        .toList();
+        if (PROLIX) {
+            Utilities.report(AVERAGE_MAP, yearAndAverageTemperatureList);
+        }
+        return yearAndAverageTemperatureList;
+    }
+
+    /**
+     * Reads the file into the map.
      *
      * @param path the file path
      */
     private boolean readFile(Path path) {
 
-        final byte[] destArr = new byte[Short.MAX_VALUE];
+        final byte[] destinationArr = new byte[Short.MAX_VALUE];
         try (FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             log.info("readFile(): path[{}], file channel size[{}]", path, fileChannel.size());
             long position = 0;
+            /*
+             * FileChannel loop
+             */
             while (position < fileChannel.size()) {
                 long regionSize = Math.min(Integer.MAX_VALUE, fileChannel.size() - position);
                 log.info("readFile(): position[{}], regionSize[{}]", position, regionSize);
@@ -81,18 +106,16 @@ public class KpService {
                 long index = 0;
                 long previousIndexInBuffer = 0;
                 boolean matchedFlag = true;
+                /*
+                 * MappedByteBuffer loop
+                 */
                 while (matchedFlag) {
-                    Arrays.fill(destArr, (byte) 0);
-                    int destLength = (int) Math.min(Math.min(Short.MAX_VALUE, regionSize), fileChannel.size() - index);
-                    try {
-                        mappedByteBuffer.get((int) index, destArr, 0, destLength);
-                    } catch (Exception e) {
-                        log.error("readFile(): path[{}], mappedByteBuffer exception[{}]",
-                                path, e.getMessage());
-                        return false;
-                    }
+                    Arrays.fill(destinationArr, (byte) 0);
+                    int destinationLength = (int) Math.min(
+                            Math.min(Short.MAX_VALUE, regionSize), fileChannel.size() - index);
+                    mappedByteBuffer.get((int) index, destinationArr, 0, destinationLength);
                     previousIndexInBuffer = index;
-                    final String text = new String(destArr, StandardCharsets.UTF_8);
+                    final String text = new String(destinationArr, StandardCharsets.UTF_8);
                     int lastIndexInText = text.lastIndexOf("\r\n");
                     if (lastIndexInText == -1) {
                         matchedFlag = false;
@@ -100,7 +123,7 @@ public class KpService {
                     }
                     matchedFlag = readLines(text.substring(0, lastIndexInText));
                     index += lastIndexInText + 2;
-                    if (index >= regionSize || index + destLength >= regionSize) {
+                    if (index >= regionSize || index + destinationLength >= regionSize) {
                         matchedFlag = false;
                     }
                 }
@@ -119,7 +142,7 @@ public class KpService {
             log.error("readFile(): path[{}], exception[{}]", path, e.getMessage());
             return false;
         }
-        log.info("readFile(): OK");
+        log.info("readFile(): file reading success");
         return true;
     }
 
@@ -141,7 +164,7 @@ public class KpService {
     }
 
     /**
-     * Reads the matched line.
+     * Reads the matched text line.
      *
      * @param matcher the matcher
      */
@@ -166,39 +189,17 @@ public class KpService {
                     cityOpt.isEmpty(), yearOpt.isEmpty(), temperatureOpt.isEmpty());
             return;
         }
-        computeAverages(cityOpt.get(), yearOpt.get(), temperatureOpt.get());
+        sumTemperatures(cityOpt.get(), yearOpt.get(), temperatureOpt.get());
     }
 
     /**
-     * Gets the averages list.
-     *
-     * @param city the city
-     * @return the list
-     */
-    private List<YearAndAverageTemperature> getAveragesList(String city) {
-
-        final List<YearAndAverageTemperature> yearAndAverageTemperatureList =
-                AVERAGE_MAP.entrySet().stream()
-                        .filter(cityEntry -> city.equals(cityEntry.getKey()))
-                        .map(Map.Entry::getValue)
-                        .flatMap(yearMap -> yearMap.keySet().stream().map(
-                                year -> new YearAndAverageTemperature(year,
-                                        yearMap.get(year)[1] / yearMap.get(year)[0])))
-                        .toList();
-        if (PROLIX) {
-            Utilities.report(AVERAGE_MAP, yearAndAverageTemperatureList);
-        }
-        return yearAndAverageTemperatureList;
-    }
-
-    /**
-     * Reads the matched line.
+     * Sums the temperatures for the year in the given city.
      *
      * @param city        the city
      * @param year        the year
      * @param temperature the temperature
      */
-    private void computeAverages(String city, Integer year, Double temperature) {
+    private void sumTemperatures(String city, Integer year, Double temperature) {
 
         AVERAGE_MAP.putIfAbsent(city, new TreeMap<>());
         final Map<Integer, double[]> cityMap = AVERAGE_MAP.get(city);

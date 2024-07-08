@@ -8,7 +8,7 @@ import kp.models.YearAndAverageTemperature;
 import java.io.IOException;
 
 /**
- * The serializer for the {@link YearAndAverageTemperature}
+ * The custom serializer for the {@link YearAndAverageTemperature}
  */
 public class YearAndAverageTemperatureSerializer extends StdSerializer<YearAndAverageTemperature> {
     /**

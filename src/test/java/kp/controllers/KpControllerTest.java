@@ -76,8 +76,9 @@ class KpControllerTest {
     @DisplayName("🟩 should get the average temperatures")
     void shouldGetAverageTemperatures() throws Exception {
         // GIVEN
-        final MockHttpServletRequestBuilder requestBuilder = get(AVERAGE_TEMPERATURES_URL_FUN.apply(CITY))
-                .accept(MediaType.APPLICATION_JSON_VALUE);
+        final MockHttpServletRequestBuilder requestBuilder =
+                get(AVERAGE_TEMPERATURES_URL_FUN.apply(CITY))
+                        .accept(MediaType.APPLICATION_JSON_VALUE);
         // WHEN
         final ResultActions resultActions = mockMvc.perform(requestBuilder);
         // THEN
@@ -101,8 +102,9 @@ class KpControllerTest {
     @DisplayName("🟥 should not get the average temperatures with unknown city")
     void shouldNotGetAverageTemperaturesWithUnknownCity() throws Exception {
         // GIVEN
-        final MockHttpServletRequestBuilder requestBuilder = get(AVERAGE_TEMPERATURES_URL_FUN.apply(UNKNOWN_CITY))
-                .accept(MediaType.APPLICATION_JSON_VALUE);
+        final MockHttpServletRequestBuilder requestBuilder =
+                get(AVERAGE_TEMPERATURES_URL_FUN.apply(UNKNOWN_CITY))
+                        .accept(MediaType.APPLICATION_JSON_VALUE);
         // WHEN
         final ResultActions resultActions = mockMvc.perform(requestBuilder);
         // THEN

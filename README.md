@@ -1,7 +1,38 @@
 # large-file-reading-challenge
 <p>
-<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/docs/mermaid/stateDiagram.md">Using MappedByteBuffer</a>
+The application diagram describing the <a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/docs/mermaid/stateDiagram.md">MappedByteBuffer Using</a>.
 </p>
+<p>
+The controller method:
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/java/kp/controllers/KpController.java#L44">
+kp.controllers.KpController::getAverageTemperatures</a>.
+</p>
+<p>
+The file reading method:
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/java/kp/services/KpService.java#L92">
+kp.services.KpService::readFile</a>.
+</p>
+<p>
+The text line matching method:
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/java/kp/services/KpService.java#L171">
+kp.services.KpService::readMatchedLine</a>.
+</p>
+<p>
+The averages map serves as the cache for the big file reading results.<br>
+The averages map reading method:
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/java/kp/services/KpService.java#L71">
+kp.services.KpService::getAveragesList</a>.
+</p>
+<p>
+The frontend logic is in the web page:
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/resources/static/index.html">
+index.html</a>.
+</p>
+<p>
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/tree/main/src/main/java/kp">
+The tests</a>.
+</p>
+<hr>
 <p>The 3GB data file <i>city_temperatures.csv</i> content</p>
 <p>
 The application is using the 
@@ -13,7 +44,9 @@ The file is reread if it was externally changed.
 </p>
 <ul>
 <li>file format - comma separated values</li>
-<li>one hundred biggest US cities</li>
+<li>one hundred biggest US cities (
+<a href="https://github.com/Ee-Cs/large-file-reading-challenge/blob/main/src/main/resources/static/index.html#L104">
+combo</a> )</li>
 <li>a half-century of samples<br>
     (temperature sampled every half an hour)
     <ul>
